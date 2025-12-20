@@ -1,0 +1,19 @@
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: termlib
+abstract: "A minimalist terminal display library written as a Go module. It explores
+the space between fmt package and a rich library like tcell."
+authors:
+  - family-names: Doiel
+    given-names: R. S.
+    orcid: https://orcid.org/0000-0003-0900-6903
+    email: rsdoiel@gmail.com
+
+
+repository-code: "https://github.com/rsdoiel/termlib"
+version: 0.0.1
+date-released: 2025-11-19
+
+

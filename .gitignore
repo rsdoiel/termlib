@@ -1,0 +1,8 @@
+*~
+*.tmp
+*.swp
+*.bak
+scratch.txt
+bin/
+dist/
+man/
