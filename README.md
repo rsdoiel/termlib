@@ -2,11 +2,11 @@
 
 # termlib
 
-A minimalist terminal display librarey written in Go. I find myself wanting a little more than fmt provides for terminal output but don't want to reach for a rich Go terminal UI library like tcell. termlib explores that space.
+A minimalist terminal display library written in Go. I often find myself wanting a little more than display control than fmt packages provides but don't want to commit to a rich library like tcell. This project, termlib, explores that space.
 
 ## Release Notes
 
-- version: 0.0.0
+- version: 0.0.1
 - status: concept
 - released: 2025-11-19
 
