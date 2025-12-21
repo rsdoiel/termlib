@@ -1,4 +1,4 @@
-%tldemo(1) user manual | version 0.0.2 cffebe8
+%tldemo(1) user manual | version 0.0.2 e94f7fc
 % R. S. Doiel
 % 2025-12-21
 
