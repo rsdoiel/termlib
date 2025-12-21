@@ -6,9 +6,9 @@ A minimalist terminal display library written in Go. I often find myself wanting
 
 ## Release Notes
 
-- version: 0.0.1
+- version: 0.0.2
 - status: concept
-- released: 2025-11-19
+- released: 2025-11-21
 
 A quick exploration of collecting the funcs I use for manipulating and display content in the terminal.
 
