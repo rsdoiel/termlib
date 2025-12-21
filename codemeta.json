@@ -30,7 +30,7 @@
   "version": "0.0.2",
   "developmentStatus": "concept",
   "issueTracker": "https://github.com/rsdoiel/termlib/issues",
-  "releaseNotes": "Added some color support.",
+  "releaseNotes": "Added some color support. When you initialize a new TermLib struct with New you now pass in the io.Writer.",
   "copyrightYear": 2025,
   "copyrightHolder": "R. S. Doiel"
 }

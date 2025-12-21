@@ -25,7 +25,7 @@ About this software
 
 ## termlib 0.0.2
 
-Added some color support.
+Added some color support. When you initialize a new TermLib struct with New you now pass in the io.Writer.
 
 ### Authors
 
