@@ -10,22 +10,22 @@ authors:
 
 
 repository_code: https://github.com/rsdoiel/termlib
-version: 0.0.1
+version: 0.0.2
 
 
 programming_language:
   - Go &gt;&#x3D; 1.25
 
 
-date_released: 2025-11-19
+date_released: 2025-11-21
 ---
 
 About this software
 ===================
 
-## termlib 0.0.1
+## termlib 0.0.2
 
-Initial exploration.
+Added some color support.
 
 ### Authors
 

@@ -12,8 +12,8 @@
     }
   ],
   "dateCreated": "2025-12-19",
-  "dateModified": "2025-12-19",
-  "datePublished": "2025-11-19",
+  "dateModified": "2025-12-21",
+  "datePublished": "2025-11-21",
   "description": "A minimalist terminal display library written as a Go module. It explores\nthe space between fmt package and a rich library like tcell.",
   "name": "termlib",
   "programmingLanguage": [
@@ -27,10 +27,10 @@
     "Pandoc >= 3.1",
     "GNU Make >= 3.0"
   ],
-  "version": "0.0.1",
+  "version": "0.0.2",
   "developmentStatus": "concept",
   "issueTracker": "https://github.com/rsdoiel/termlib/issues",
-  "releaseNotes": "Initial exploration.",
+  "releaseNotes": "Added some color support.",
   "copyrightYear": 2025,
   "copyrightHolder": "R. S. Doiel"
 }

@@ -22,67 +22,93 @@ import (
 	"testing"
 )
 
-func TestTermLib(t *testing.T) {
-	// Redirect stdout for testing
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	term := New()
-
-	// Test Move
-	term.Move(5, 10)
-	row, col := term.GetCurPos()
-	if row != 5 || col != 10 {
-		t.Errorf("Move(5, 10) failed, got (%d, %d)", row, col)
-	}
-
-	// Test Clear
-	term.Clear()
-	row, col = term.GetCurPos()
-	if row != 1 || col != 1 {
-		t.Errorf("Clear() failed, got (%d, %d)", row, col)
-	}
-
-	// Test Print
-	term.Print("Hello")
-	row, col = term.GetCurPos()
-	if row != 1 || col != 6 {
-		t.Errorf("Print(\"Hello\") failed, got (%d, %d)", row, col)
-	}
-
-	// Test ClrToEOL
-	term.ClrToEOL()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	got := buf.String()
-	expected := "\033[5;10H\033[2J\033[HHello\033[0K"
-	if got != expected {
-		t.Errorf("Output mismatch: got %q, want %q", got, expected)
-	}
-}
 
 func TestClrToBOL(t *testing.T) {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	var buf bytes.Buffer
+	term := New(&buf)
 
-	term := New()
 	term.Move(3, 5)
 	term.ClrToBOL()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	got := buf.String()
 	expected := "\033[3;5H\033[1K"
+	got := buf.String()
 	if got != expected {
 		t.Errorf("ClrToBOL() = %q, want %q", got, expected)
 	}
 }
+
+func TestStyleAndColor(t *testing.T) {
+	var buf bytes.Buffer
+	term := New(&buf)
+
+	term.SetFgColor(Red)
+	term.SetBgColor(YellowBg)
+	term.SetBold()
+	term.SetItalic()
+	term.Print("Styled")
+
+	expected := "\033[31m\033[43m\033[1m\033[3mStyled\033[0m"
+	got := buf.String()
+	if got != expected {
+		t.Errorf("Style and color output mismatch: got %q, want %q", got, expected)
+	}
+}
+
+
+func TestNewWithStdout(t *testing.T) {
+	term := New(os.Stdout)
+	// Just verify that it can be created with os.Stdout
+	if term == nil {
+		t.Fatal("New(os.Stdout) returned nil")
+	}
+}
+
+
+func TestTermLib(t *testing.T) {
+	var buf bytes.Buffer
+	term := New(&buf)
+
+	term.Move(5, 10)
+	term.Clear()
+	term.Print("Hello")
+	term.ClrToEOL()
+	expected := "\033[5;10H\033[2J\033[HHello\033[0K"
+	got := buf.String()
+	if got != expected {
+		t.Errorf("ClrToEOL() = %q, want %q", got, expected)
+	}
+}
+
+func TestResetStyle(t *testing.T) {
+	var buf bytes.Buffer
+	term := New(&buf)
+
+	term.SetFgColor(Red)
+	term.SetBgColor(YellowBg)
+	term.SetBold()
+	term.SetItalic()
+	term.ResetStyle()
+	term.Print("Normal")
+
+	expected := "\033[0mNormal"
+	got := buf.String()
+	if got != expected {
+		t.Errorf("ResetStyle() output mismatch: got %q, want %q", got, expected)
+	}
+}
+
+func TestMultiplePrints(t *testing.T) {
+	var buf bytes.Buffer
+	term := New(&buf)
+
+	term.SetFgColor(Blue)
+	term.Print("First ")
+	term.SetFgColor(Green)
+	term.Print("Second")
+
+	expected := "\033[34mFirst \033[0m\033[32mSecond\033[0m"
+	got := buf.String()
+	if got != expected {
+		t.Errorf("Multiple prints output mismatch: got %q, want %q", got, expected)
+	}
+}
+
