@@ -17,6 +17,7 @@ You should have received a copy of the GNU Affero General Public License
 package termlib
 
 import (
+	"fmt"
 	"bytes"
 	"os"
 	"testing"
@@ -109,6 +110,30 @@ func TestMultiplePrints(t *testing.T) {
 	got := buf.String()
 	if got != expected {
 		t.Errorf("Multiple prints output mismatch: got %q, want %q", got, expected)
+	}
+}
+
+func TestPrintf(t *testing.T) {
+	var buf bytes.Buffer
+	format := "Hello %q %d,\n"
+	expected := fmt.Sprintf(format, "Robert", 63)
+	term := New(&buf)
+	term.Printf(format, "Robert", 63)
+	got := buf.String()
+	if got != expected {
+		t.Errorf("Printf output mismatch: got %q, want %q", got, expected)
+	}	
+}
+
+func TestPrintln(t *testing.T) {
+	const name, age = "Kim", 22
+	var buf bytes.Buffer
+	expected := fmt.Sprintln(name, "is", age, "years old.")
+	term := New(&buf)
+	term.Println(name, "is", age, "years old.")
+	got := buf.String()
+	if got != expected {
+		t.Errorf("Println output mismatch: got %q, want %q", got, expected)
 	}
 }
 

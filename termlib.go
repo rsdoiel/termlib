@@ -137,6 +137,21 @@ func (t *TermLib) Print(s string) {
 	}
 }
 
+// Printf writes a format string to the terminal with the current style and updates
+// the cursor position.
+func (t *TermLib) Printf(format string, a ...interface{}) {
+	if len(a) > 0 {
+		t.Print(fmt.Sprintf(format, a...))
+	} else {
+		t.Print(format)
+	}
+}
+
+// Println writes parameters as a string with a trailing new line
+func (t *TermLib) Println(a ...interface{}) {
+	t.Print(fmt.Sprintln(a...))
+}
+
 // GetCurPos returns the current cursor position.
 func (t *TermLib) GetCurPos() (int, int) {
 	t.mu.Lock()
