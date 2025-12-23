@@ -34,8 +34,8 @@ const (
 	WhiteBg    = "\033[47m"
 )
 
-// TermLib represents a terminal controller.
-type TermLib struct {
+// Terminal represents a terminal controller.
+type Terminal struct {
 	mu             sync.Mutex
 	cursorRow      int
 	cursorCol      int
@@ -49,9 +49,9 @@ type TermLib struct {
 	styleApplied   bool // Track if any style is applied
 }
 
-// New creates a new TermLib instance with the specified writer and default styles.
-func New(writer io.Writer) *TermLib {
-	return &TermLib{
+// New creates a new Terminal instance with the specified writer and default styles.
+func New(writer io.Writer) *Terminal {
+	return &Terminal{
 		writer:        writer,
 		cursorRow:     1,
 		cursorCol:     1,
@@ -63,7 +63,7 @@ func New(writer io.Writer) *TermLib {
 }
 
 // updateTerminalSize updates the terminal width and height.
-func (t *TermLib) updateTerminalSize() {
+func (t *Terminal) updateTerminalSize() {
 	width, height, err := term.GetSize(int(os.Stdout.Fd()))
 	if err == nil {
 		t.terminalWidth = width
@@ -72,21 +72,21 @@ func (t *TermLib) updateTerminalSize() {
 }
 
 // GetTerminalWidth returns the terminal width.
-func (t *TermLib) GetTerminalWidth() int {
+func (t *Terminal) GetTerminalWidth() int {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.terminalWidth
 }
 
 // GetTerminalHeight returns the terminal height.
-func (t *TermLib) GetTerminalHeight() int {
+func (t *Terminal) GetTerminalHeight() int {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.terminalHeight
 }
 
 // Move moves the cursor to the specified row and column (1-based).
-func (t *TermLib) Move(row, col int) {
+func (t *Terminal) Move(row, col int) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.cursorRow, t.cursorCol = row, col
@@ -94,7 +94,7 @@ func (t *TermLib) Move(row, col int) {
 }
 
 // Clear clears the screen and moves the cursor to the top-left corner.
-func (t *TermLib) Clear() {
+func (t *Terminal) Clear() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.cursorRow, t.cursorCol = 1, 1
@@ -102,21 +102,21 @@ func (t *TermLib) Clear() {
 }
 
 // ClrToEOL clears from the current cursor position to the end of the line.
-func (t *TermLib) ClrToEOL() {
+func (t *Terminal) ClrToEOL() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	fmt.Fprint(t.writer, "\033[0K")
 }
 
 // ClrToBOL clears from the current cursor position to the start of the line.
-func (t *TermLib) ClrToBOL() {
+func (t *Terminal) ClrToBOL() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	fmt.Fprint(t.writer, "\033[1K")
 }
 
 // Print writes a string to the terminal with current style and updates the cursor position.
-func (t *TermLib) Print(s string) {
+func (t *Terminal) Print(s string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.styleApplied {
@@ -139,7 +139,7 @@ func (t *TermLib) Print(s string) {
 
 // Printf writes a format string to the terminal with the current style and updates
 // the cursor position.
-func (t *TermLib) Printf(format string, a ...interface{}) {
+func (t *Terminal) Printf(format string, a ...interface{}) {
 	if len(a) > 0 {
 		t.Print(fmt.Sprintf(format, a...))
 	} else {
@@ -148,19 +148,19 @@ func (t *TermLib) Printf(format string, a ...interface{}) {
 }
 
 // Println writes parameters as a string with a trailing new line
-func (t *TermLib) Println(a ...interface{}) {
+func (t *Terminal) Println(a ...interface{}) {
 	t.Print(fmt.Sprintln(a...))
 }
 
 // GetCurPos returns the current cursor position.
-func (t *TermLib) GetCurPos() (int, int) {
+func (t *Terminal) GetCurPos() (int, int) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.cursorRow, t.cursorCol
 }
 
 // Refresh ensures all buffered output is written to the terminal.
-func (t *TermLib) Refresh() {
+func (t *Terminal) Refresh() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if w, ok := t.writer.(*os.File); ok {
@@ -169,7 +169,7 @@ func (t *TermLib) Refresh() {
 }
 
 // SetFgColor sets the foreground color.
-func (t *TermLib) SetFgColor(color string) {
+func (t *Terminal) SetFgColor(color string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.fgColor = color
@@ -177,7 +177,7 @@ func (t *TermLib) SetFgColor(color string) {
 }
 
 // SetBgColor sets the background color.
-func (t *TermLib) SetBgColor(color string) {
+func (t *Terminal) SetBgColor(color string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.bgColor = color
@@ -185,7 +185,7 @@ func (t *TermLib) SetBgColor(color string) {
 }
 
 // SetBold enables bold text.
-func (t *TermLib) SetBold() {
+func (t *Terminal) SetBold() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.isBold = true
@@ -193,7 +193,7 @@ func (t *TermLib) SetBold() {
 }
 
 // SetItalic enables italic text.
-func (t *TermLib) SetItalic() {
+func (t *Terminal) SetItalic() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.isItalic = true
@@ -201,7 +201,7 @@ func (t *TermLib) SetItalic() {
 }
 
 // ResetStyle resets all styles to default.
-func (t *TermLib) ResetStyle() {
+func (t *Terminal) ResetStyle() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	fmt.Fprint(t.writer, Reset)
@@ -209,7 +209,7 @@ func (t *TermLib) ResetStyle() {
 }
 
 // applyStyle applies the current style settings.
-func (t *TermLib) applyStyle() {
+func (t *Terminal) applyStyle() {
 	if t.fgColor != Reset {
 		fmt.Fprint(t.writer, t.fgColor)
 	}
@@ -225,7 +225,7 @@ func (t *TermLib) applyStyle() {
 }
 
 // resetStyleState resets the internal style state.
-func (t *TermLib) resetStyleState() {
+func (t *Terminal) resetStyleState() {
 	t.fgColor = Reset
 	t.bgColor = Reset
 	t.isBold = false

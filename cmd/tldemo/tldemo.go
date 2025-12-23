@@ -74,7 +74,7 @@ func main() {
 	term.Refresh()
 }
 
-func showStyleDemo(term *termlib.TermLib) {
+func showStyleDemo(term *termlib.Terminal) {
 	// Clear the middle section for our demo
 	for row := 3; row < term.GetTerminalHeight()-2; row++ {
 		term.Move(row, 1)
@@ -84,7 +84,7 @@ func showStyleDemo(term *termlib.TermLib) {
 	// Title
 	term.Move(3, 1)
 	term.SetBold()
-	term.Print("=== TermLib Color & Style Demo ===")
+	term.Print("=== Terminal Color & Style Demo ===")
 	term.ResetStyle()
 
 	// Foreground colors section

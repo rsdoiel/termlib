@@ -64,7 +64,7 @@ func TestNewWithStdout(t *testing.T) {
 }
 
 
-func TestTermLib(t *testing.T) {
+func TestTerminal(t *testing.T) {
 	var buf bytes.Buffer
 	term := New(&buf)
 

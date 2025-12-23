@@ -10,7 +10,7 @@ authors:
 
 
 repository_code: https://github.com/rsdoiel/termlib
-version: 0.0.2
+version: 0.0.3
 
 
 programming_language:
@@ -23,9 +23,9 @@ date_released: 2025-11-21
 About this software
 ===================
 
-## termlib 0.0.2
+## termlib 0.0.3
 
-Added some color support. When you initialize a new TermLib struct with New you now pass in the io.Writer.
+Added Printf and Println to methods for TermLib struct.
 
 ### Authors
 
