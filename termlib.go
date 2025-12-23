@@ -51,7 +51,7 @@ type Terminal struct {
 
 // New creates a new Terminal instance with the specified writer and default styles.
 func New(writer io.Writer) *Terminal {
-	return &Terminal{
+	term := &Terminal{
 		writer:        writer,
 		cursorRow:     1,
 		cursorCol:     1,
@@ -60,10 +60,12 @@ func New(writer io.Writer) *Terminal {
 		fgColor:       Reset,
 		bgColor:       Reset,
 	}
+        term.UpdateTerminalSize()	
+	return term
 }
 
-// updateTerminalSize updates the terminal width and height.
-func (t *Terminal) updateTerminalSize() {
+// UpdateTerminalSize updates the terminal width and height.
+func (t *Terminal) UpdateTerminalSize() {
 	width, height, err := term.GetSize(int(os.Stdout.Fd()))
 	if err == nil {
 		t.terminalWidth = width
