@@ -48,6 +48,10 @@ func main() {
 		// Print content in the upper part of the screen
 		term.Move(1, 1)
 		term.Print(fmt.Sprintf("Processing item %d of %d...", i+1, totalSteps))
+		term.Printf("\nWidth: %d\n", term.GetTerminalWidth())
+		term.Printf("Height: %d\n", term.GetTerminalHeight())
+		row, col := term.GetCurPos()
+		term.Printf("row %d, col: %d\n\n", row, col)
 
 		// Show color and style demo after the first few steps
 		if i == 3 && !demoShown {

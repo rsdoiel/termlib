@@ -168,6 +168,29 @@ func (t *Terminal) Refresh() {
 	}
 }
 
+// GetFgColor retrives the foreground color code.
+func (t *Terminal) GetFgColor() string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.fgColor
+}
+
+// GetBgColor  retrieves the background color code.
+func (t *Terminal) GetBgColor() string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.bgColor
+}
+
+
+// SetBgColor sets the background color.
+func (t *Terminal) SetBgColor(color string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.bgColor = color
+	t.styleApplied = true
+}
+
 // SetFgColor sets the foreground color.
 func (t *Terminal) SetFgColor(color string) {
 	t.mu.Lock()
