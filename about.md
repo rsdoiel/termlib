@@ -10,22 +10,25 @@ authors:
 
 
 repository_code: https://github.com/rsdoiel/termlib
-version: 0.0.3
+version: 0.0.4
 
 
 programming_language:
   - Go &gt;&#x3D; 1.25
 
 
-date_released: 2025-11-21
+date_released: 2025-12-24
 ---
 
 About this software
 ===================
 
-## termlib 0.0.3
+## termlib 0.0.4
 
-Added Printf and Println to methods for TermLib struct.
+- Renamed TermLib struct to Terminal struct
+- Added Print, Printf and Println to methods for Terminal struct.
+- Added basic support for color
+- minor bug fixes
 
 ### Authors
 
