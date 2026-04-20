@@ -87,6 +87,10 @@ func (le *LineEditor) AppendHistory(line string) {
  * restored before returning. If raw mode is unavailable (e.g. stdin is a
  * pipe) the call falls back to plain unbuffered line reading.
  *
+ * Long lines scroll horizontally rather than wrapping: the display shows a
+ * window over the buffer that pans to keep the cursor visible. Left/Right
+ * arrows let the user navigate to any part of the line.
+ *
  * Parameters:
  *   prompt (string) — text printed before the cursor; must contain no ANSI
  *                     escape sequences (their widths are not tracked).
@@ -107,20 +111,42 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 	}
 	defer term.Restore(fd, oldState)
 
+	termWidth, _, err := term.GetSize(fd)
+	if err != nil || termWidth <= 0 {
+		termWidth = 80
+	}
+	promptLen := utf8.RuneCountInString(prompt)
+	viewWidth := termWidth - promptLen
+	if viewWidth < 1 {
+		viewWidth = 1
+	}
+
 	io.WriteString(le.out, prompt)
 
 	buf := []rune{}
 	pos := 0
+	viewOffset := 0
 	histIdx := len(le.history) // past the end = current (new) line
 
-	// redraw reprints the prompt and buffer from the start of the current
-	// terminal line, then positions the cursor at pos.
+	// redraw reprints the prompt and the visible slice of buf, then
+	// positions the cursor at pos. The visible window [viewOffset,
+	// viewOffset+viewWidth) pans automatically to keep pos in view.
 	redraw := func() {
+		// Pan viewport to keep pos visible.
+		if pos < viewOffset {
+			viewOffset = pos
+		} else if pos >= viewOffset+viewWidth {
+			viewOffset = pos - viewWidth + 1
+		}
+		end := viewOffset + viewWidth
+		if end > len(buf) {
+			end = len(buf)
+		}
 		io.WriteString(le.out, "\r")
 		io.WriteString(le.out, prompt)
-		io.WriteString(le.out, string(buf))
+		io.WriteString(le.out, string(buf[viewOffset:end]))
 		io.WriteString(le.out, "\033[K") // clear to end of line
-		if back := len(buf) - pos; back > 0 {
+		if back := end - pos; back > 0 {
 			fmt.Fprintf(le.out, "\033[%dD", back)
 		}
 	}
