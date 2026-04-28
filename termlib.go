@@ -3,6 +3,7 @@
 package termlib
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -35,6 +36,9 @@ const (
 )
 
 // Terminal represents a terminal controller.
+// Output is accumulated in an internal buffer and written to the
+// underlying destination only when Refresh is called, which prevents
+// the terminal from rendering partial frames and eliminates flicker.
 type Terminal struct {
 	mu             sync.Mutex
 	cursorRow      int
@@ -45,23 +49,24 @@ type Terminal struct {
 	bgColor        string
 	isBold         bool
 	isItalic       bool
-	writer         io.Writer
-	styleApplied   bool // Track if any style is applied
+	out            io.Writer  // underlying destination (e.g. os.Stdout)
+	buf            bytes.Buffer
+	styleApplied   bool
 }
 
 // New creates a new Terminal instance with the specified writer and default styles.
 func New(writer io.Writer) *Terminal {
-	term := &Terminal{
-		writer:        writer,
-		cursorRow:     1,
-		cursorCol:     1,
-		terminalWidth: 80,
+	t := &Terminal{
+		out:            writer,
+		cursorRow:      1,
+		cursorCol:      1,
+		terminalWidth:  80,
 		terminalHeight: 24,
-		fgColor:       Reset,
-		bgColor:       Reset,
+		fgColor:        Reset,
+		bgColor:        Reset,
 	}
-        term.UpdateTerminalSize()	
-	return term
+	t.UpdateTerminalSize()
+	return t
 }
 
 // UpdateTerminalSize updates the terminal width and height.
@@ -92,7 +97,7 @@ func (t *Terminal) Move(row, col int) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.cursorRow, t.cursorCol = row, col
-	fmt.Fprintf(t.writer, "\033[%d;%dH", row, col)
+	fmt.Fprintf(&t.buf, "\033[%d;%dH", row, col)
 }
 
 // Clear clears the screen and moves the cursor to the top-left corner.
@@ -100,21 +105,36 @@ func (t *Terminal) Clear() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	t.cursorRow, t.cursorCol = 1, 1
-	fmt.Fprint(t.writer, "\033[2J\033[H")
+	fmt.Fprint(&t.buf, "\033[2J\033[H")
 }
 
 // ClrToEOL clears from the current cursor position to the end of the line.
 func (t *Terminal) ClrToEOL() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	fmt.Fprint(t.writer, "\033[0K")
+	fmt.Fprint(&t.buf, "\033[0K")
 }
 
 // ClrToBOL clears from the current cursor position to the start of the line.
 func (t *Terminal) ClrToBOL() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	fmt.Fprint(t.writer, "\033[1K")
+	fmt.Fprint(&t.buf, "\033[1K")
+}
+
+// HideCursor suppresses the terminal cursor during redraws to eliminate flicker.
+// Always pair with ShowCursor before calling Refresh.
+func (t *Terminal) HideCursor() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	fmt.Fprint(&t.buf, "\033[?25l")
+}
+
+// ShowCursor restores the terminal cursor after a redraw.
+func (t *Terminal) ShowCursor() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	fmt.Fprint(&t.buf, "\033[?25h")
 }
 
 // Print writes a string to the terminal with current style and updates the cursor position.
@@ -123,11 +143,11 @@ func (t *Terminal) Print(s string) {
 	defer t.mu.Unlock()
 	if t.styleApplied {
 		t.applyStyle()
-		fmt.Fprint(t.writer, s)
-		fmt.Fprint(t.writer, Reset)
+		fmt.Fprint(&t.buf, s)
+		fmt.Fprint(&t.buf, Reset)
 		t.resetStyleState()
 	} else {
-		fmt.Fprint(t.writer, s)
+		fmt.Fprint(&t.buf, s)
 	}
 	for _, c := range s {
 		if c == '\n' {
@@ -161,13 +181,17 @@ func (t *Terminal) GetCurPos() (int, int) {
 	return t.cursorRow, t.cursorCol
 }
 
-// Refresh ensures all buffered output is written to the terminal.
+// Refresh flushes the internal output buffer to the underlying writer in a single
+// write, so the terminal receives a complete frame at once rather than incremental
+// updates. Call Refresh once at the end of every full redraw.
 func (t *Terminal) Refresh() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if w, ok := t.writer.(*os.File); ok {
-		w.Sync()
+	if t.buf.Len() == 0 {
+		return
 	}
+	t.out.Write(t.buf.Bytes()) //nolint:errcheck
+	t.buf.Reset()
 }
 
 // GetFgColor retrives the foreground color code.
@@ -220,23 +244,23 @@ func (t *Terminal) SetItalic() {
 func (t *Terminal) ResetStyle() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	fmt.Fprint(t.writer, Reset)
+	fmt.Fprint(&t.buf, Reset)
 	t.resetStyleState()
 }
 
 // applyStyle applies the current style settings.
 func (t *Terminal) applyStyle() {
 	if t.fgColor != Reset {
-		fmt.Fprint(t.writer, t.fgColor)
+		fmt.Fprint(&t.buf, t.fgColor)
 	}
 	if t.bgColor != Reset {
-		fmt.Fprint(t.writer, t.bgColor)
+		fmt.Fprint(&t.buf, t.bgColor)
 	}
 	if t.isBold {
-		fmt.Fprint(t.writer, Bold)
+		fmt.Fprint(&t.buf, Bold)
 	}
 	if t.isItalic {
-		fmt.Fprint(t.writer, Italic)
+		fmt.Fprint(&t.buf, Italic)
 	}
 }
 

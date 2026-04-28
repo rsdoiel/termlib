@@ -30,6 +30,7 @@ func TestClrToBOL(t *testing.T) {
 
 	term.Move(3, 5)
 	term.ClrToBOL()
+	term.Refresh()
 	expected := "\033[3;5H\033[1K"
 	got := buf.String()
 	if got != expected {
@@ -46,6 +47,7 @@ func TestStyleAndColor(t *testing.T) {
 	term.SetBold()
 	term.SetItalic()
 	term.Print("Styled")
+	term.Refresh()
 
 	expected := "\033[31m\033[43m\033[1m\033[3mStyled\033[0m"
 	got := buf.String()
@@ -72,6 +74,7 @@ func TestTerminal(t *testing.T) {
 	term.Clear()
 	term.Print("Hello")
 	term.ClrToEOL()
+	term.Refresh()
 	expected := "\033[5;10H\033[2J\033[HHello\033[0K"
 	got := buf.String()
 	if got != expected {
@@ -89,6 +92,7 @@ func TestResetStyle(t *testing.T) {
 	term.SetItalic()
 	term.ResetStyle()
 	term.Print("Normal")
+	term.Refresh()
 
 	expected := "\033[0mNormal"
 	got := buf.String()
@@ -105,6 +109,7 @@ func TestMultiplePrints(t *testing.T) {
 	term.Print("First ")
 	term.SetFgColor(Green)
 	term.Print("Second")
+	term.Refresh()
 
 	expected := "\033[34mFirst \033[0m\033[32mSecond\033[0m"
 	got := buf.String()
@@ -119,10 +124,11 @@ func TestPrintf(t *testing.T) {
 	expected := fmt.Sprintf(format, "Robert", 63)
 	term := New(&buf)
 	term.Printf(format, "Robert", 63)
+	term.Refresh()
 	got := buf.String()
 	if got != expected {
 		t.Errorf("Printf output mismatch: got %q, want %q", got, expected)
-	}	
+	}
 }
 
 func TestPrintln(t *testing.T) {
@@ -131,6 +137,7 @@ func TestPrintln(t *testing.T) {
 	expected := fmt.Sprintln(name, "is", age, "years old.")
 	term := New(&buf)
 	term.Println(name, "is", age, "years old.")
+	term.Refresh()
 	got := buf.String()
 	if got != expected {
 		t.Errorf("Println output mismatch: got %q, want %q", got, expected)

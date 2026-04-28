@@ -75,6 +75,7 @@ func TestDrawProgressBar(t *testing.T) {
 	term := New(&buf)
 
 	DrawProgressBar(term, 1, 1, 12, 5, 10) // 50% of width=12 → inner=10 → 5 filled
+	term.Refresh()
 	got := buf.String()
 
 	// Output starts with a Move sequence then the bar
@@ -88,6 +89,7 @@ func TestDrawProgressBarEmpty(t *testing.T) {
 	term := New(&buf)
 
 	DrawProgressBar(term, 1, 1, 12, 0, 0) // total=0 → all empty
+	term.Refresh()
 	got := buf.String()
 	if !strings.Contains(got, "[░░░░░░░░░░]") {
 		t.Errorf("DrawProgressBar empty got %q, expected all-empty bar", got)
@@ -99,6 +101,7 @@ func TestDrawBoxNoTitle(t *testing.T) {
 	term := New(&buf)
 
 	DrawBox(term, 1, 1, 10, 3, "")
+	term.Refresh()
 	got := buf.String()
 
 	if !strings.Contains(got, "┌────────┐") {
@@ -114,6 +117,7 @@ func TestDrawBoxWithTitle(t *testing.T) {
 	term := New(&buf)
 
 	DrawBox(term, 1, 1, 20, 3, "Test")
+	term.Refresh()
 	got := buf.String()
 
 	if !strings.Contains(got, "─ Test ─") {
