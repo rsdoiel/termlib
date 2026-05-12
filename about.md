@@ -10,31 +10,31 @@ authors:
 
 
 repository_code: https://github.com/rsdoiel/termlib
-version: 0.0.6
+version: 0.0.7
 
 
 programming_language:
   - Go &gt;&#x3D; 1.25
 
 
-date_released: 2026-05-02
+date_released: 2026-05-12
 ---
 
 About this software
 ===================
 
-## termlib 0.0.6
+## termlib 0.0.7
 
-- Renamed TermLib struct to Terminal struct
-- Added Print, Printf and Println to methods for Terminal struct.
-- Added basic support for color
-- minor bug fixes
-- Added additional methods to give more text interface support.
-- Fixes and adjustment made for Harvey and Audiobox experiments
+- Ctrl+J (0x0a) now inserts \n into the buffer and moves to a new visual line with "...  " continuation prompt. Enter (\r) is the only submit key.
+- redraw was refactored to be line-aware: it draws only the current visual line (from the last \n in buf to the next \n or end), choosing prompt for line 1 and "...  " for subsequent
+  lines.
+- Backspace across a \n clears the current visual line (\r\033[K), moves up (\033[1A), and redraws the merged previous line.
+- Left/Right arrows, Home/End, Ctrl+A/E/K are all clamped to the current line — they won't jump across \n boundaries.
+- History navigation (Up/Down) is disabled when lineCount > 0.
 
-### Authors
+## Authors
 
-- R. S. Doiel, <https://orcid.org/0000-0003-0900-6903>
+- [R. S. Doiel](https://orcid.org/0000-0003-0900-6903)
 
 
 
@@ -45,25 +45,25 @@ A minimalist terminal display library written as a Go module. It explores
 the space between fmt package and a rich library like tcell.
 
 
-- GitHub: <https://github.com/rsdoiel/termlib>
-- Issues: <https://github.com/rsdoiel/termlib/issues>
+- [Code Repository](https://github.com/rsdoiel/termlib)
+  - [Issue Tracker](https://github.com/rsdoiel/termlib/issues)
 
-### Programming languages
+## Programming languages
 
 - Go >= 1.25
 
 
 
 
-### Software Requirements
+## Software Requirements
 
 - Go >= 1.25
 - CMTools >= 0.0.40
 
 
-### Software Suggestions
+## Software Suggestions
 
-- Pandoc &gt;&#x3D; 3.1
-- GNU Make &gt;&#x3D; 3.0
+- Pandoc >= 3.1
+- GNU Make >= 3.0
 
 

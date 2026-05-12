@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"unicode/utf8"
 
@@ -21,13 +22,23 @@ var ErrInterrupted = errors.New("interrupted")
  * Supported keys:
  *   Left / Right arrows  — move cursor within the current line
  *   Home / End           — jump to start or end of line
- *   Up / Down arrows     — cycle through command history
+ *   Up / Down arrows     — cycle through command history (only on first line)
  *   Backspace            — delete the character before the cursor
- *   Ctrl+A               — move to beginning of line
- *   Ctrl+E               — move to end of line
- *   Ctrl+K               — kill (delete) from cursor to end of line
+ *   Ctrl+A               — move to beginning of current line
+ *   Ctrl+E               — move to end of current line
+ *   Ctrl+J               — insert a newline for multi-line input; Enter submits
+ *   Ctrl+K               — kill (delete) from cursor to end of current line
  *   Ctrl+C               — cancel input; returns ErrInterrupted
- *   Ctrl+D               — EOF on an empty line; delete-under-cursor otherwise
+ *   Ctrl+D               — EOF on an empty buffer; delete character under cursor otherwise
+ *   Ctrl+X Ctrl+E        — open $EDITOR (falling back to $VISUAL then vi) to
+ *                          compose or edit the prompt; when the editor exits the
+ *                          saved content is returned as the line result
+ *
+ * Multi-line input: Ctrl+J appends a newline to the buffer and moves to the
+ * next visual line (displayed with a "...  " continuation prompt). Enter
+ * (Ctrl+M) submits the entire buffer, including embedded newlines. History
+ * navigation is disabled once the buffer contains a newline. Backspace across
+ * a newline merges the current line back onto the previous one.
  *
  * When stdin is not a TTY (e.g. piped input in tests), Prompt falls back to
  * plain line reading without raw-mode terminal manipulation.
@@ -115,101 +126,201 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 	if err != nil || termWidth <= 0 {
 		termWidth = 80
 	}
-	promptLen := utf8.RuneCountInString(prompt)
-	viewWidth := termWidth - promptLen
-	if viewWidth < 1 {
-		viewWidth = 1
-	}
+
+	const contPrompt = "...  " // shown on lines 2+ of multi-line input
 
 	io.WriteString(le.out, prompt)
 
 	buf := []rune{}
 	pos := 0
-	viewOffset := 0
-	histIdx := len(le.history) // past the end = current (new) line
+	viewOffset := 0        // horizontal scroll offset, relative to current line's start
+	histIdx := len(le.history)
+	lineCount := 0         // number of '\n' characters currently in buf
 
-	// redraw reprints the prompt and the visible slice of buf, then
-	// positions the cursor at pos. The visible window [viewOffset,
-	// viewOffset+viewWidth) pans automatically to keep pos in view.
+	// currentLineStart returns the buf index where the current visual line begins
+	// (one past the last '\n' before pos, or 0 if none).
+	currentLineStart := func() int {
+		for i := pos - 1; i >= 0; i-- {
+			if buf[i] == '\n' {
+				return i + 1
+			}
+		}
+		return 0
+	}
+
+	// redraw repaints only the current visual line. Previous lines are frozen on
+	// screen above. The horizontal viewport pans automatically to keep pos in view.
 	redraw := func() {
-		// Pan viewport to keep pos visible.
-		if pos < viewOffset {
-			viewOffset = pos
-		} else if pos >= viewOffset+viewWidth {
-			viewOffset = pos - viewWidth + 1
+		lineStart := currentLineStart()
+
+		// Find end of current line (stop at the next '\n', if any).
+		lineEnd := len(buf)
+		for i := lineStart; i < len(buf); i++ {
+			if buf[i] == '\n' {
+				lineEnd = i
+				break
+			}
 		}
-		end := viewOffset + viewWidth
-		if end > len(buf) {
-			end = len(buf)
+
+		curPrompt := prompt
+		if lineCount > 0 {
+			curPrompt = contPrompt
 		}
+		curPromptLen := utf8.RuneCountInString(curPrompt)
+		vw := termWidth - curPromptLen
+		if vw < 1 {
+			vw = 1
+		}
+
+		localPos := pos - lineStart // cursor position within the current line
+
+		// Pan viewport to keep cursor visible.
+		if localPos < viewOffset {
+			viewOffset = localPos
+		} else if localPos >= viewOffset+vw {
+			viewOffset = localPos - vw + 1
+		}
+
+		dispStart := lineStart + viewOffset
+		dispEnd := dispStart + vw
+		if dispEnd > lineEnd {
+			dispEnd = lineEnd
+		}
+
 		io.WriteString(le.out, "\r")
-		io.WriteString(le.out, prompt)
-		io.WriteString(le.out, string(buf[viewOffset:end]))
+		io.WriteString(le.out, curPrompt)
+		io.WriteString(le.out, string(buf[dispStart:dispEnd]))
 		io.WriteString(le.out, "\033[K") // clear to end of line
-		if back := end - pos; back > 0 {
+		if back := dispEnd - pos; back > 0 {
 			fmt.Fprintf(le.out, "\033[%dD", back)
 		}
 	}
 
 	b := make([]byte, 1)
+	ctrlXPending := false
 	for {
 		if _, err := le.in.Read(b); err != nil {
 			return string(buf), err
 		}
+		ch := b[0]
 
-		switch ch := b[0]; {
+		// Ctrl+X chord: wait for the second key.
+		if ctrlXPending {
+			ctrlXPending = false
+			if ch == 0x05 { // Ctrl+E — open $EDITOR
+				term.Restore(fd, oldState)
+				result, edErr := le.openEditor(buf)
+				if edErr == nil {
+					io.WriteString(le.out, "\r\n")
+					return result, nil
+				}
+				// Editor failed — re-enter raw mode and continue editing.
+				if _, merr := term.MakeRaw(fd); merr != nil {
+					return string(buf), merr
+				}
+				fmt.Fprintf(le.out, "\r\n  (editor: %v)\r\n", edErr)
+				io.WriteString(le.out, prompt)
+				redraw()
+			}
+			// Unrecognised Ctrl+X chord — silently discard both keys.
+			continue
+		}
 
-		case ch == '\r' || ch == '\n':
+		switch {
+		case ch == '\r': // Enter — submit the full (possibly multi-line) buffer
 			io.WriteString(le.out, "\r\n")
 			return string(buf), nil
+
+		case ch == 0x0a: // Ctrl+J — insert newline (begin next input line)
+			buf = leInsertRune(buf, pos, '\n')
+			pos++
+			lineCount++
+			viewOffset = 0
+			io.WriteString(le.out, "\r\n")
+			redraw()
 
 		case ch == 0x03: // Ctrl+C
 			io.WriteString(le.out, "\r\n")
 			return "", ErrInterrupted
 
-		case ch == 0x04: // Ctrl+D — EOF on empty line, delete-under-cursor otherwise
+		case ch == 0x04: // Ctrl+D — EOF on empty buffer; delete under cursor otherwise
 			if len(buf) == 0 {
 				io.WriteString(le.out, "\r\n")
 				return "", io.EOF
 			}
-			if pos < len(buf) {
+			// Don't delete across a newline boundary.
+			if pos < len(buf) && buf[pos] != '\n' {
 				buf = append(buf[:pos], buf[pos+1:]...)
 				redraw()
 			}
 
-		case ch == 0x01: // Ctrl+A — beginning of line
-			pos = 0
+		case ch == 0x01: // Ctrl+A — beginning of current line
+			pos = currentLineStart()
+			viewOffset = 0
 			redraw()
 
-		case ch == 0x05: // Ctrl+E — end of line
-			pos = len(buf)
+		case ch == 0x05: // Ctrl+E — end of current line
+			lineStart := currentLineStart()
+			lineEnd := len(buf)
+			for i := lineStart; i < len(buf); i++ {
+				if buf[i] == '\n' {
+					lineEnd = i
+					break
+				}
+			}
+			pos = lineEnd
 			redraw()
 
-		case ch == 0x0b: // Ctrl+K — kill to end of line
-			buf = buf[:pos]
+		case ch == 0x0b: // Ctrl+K — kill to end of current line (not past '\n')
+			killEnd := len(buf)
+			for i := pos; i < len(buf); i++ {
+				if buf[i] == '\n' {
+					killEnd = i
+					break
+				}
+			}
+			buf = append(buf[:pos], buf[killEnd:]...)
 			redraw()
+
+		case ch == 0x18: // Ctrl+X — first key of a two-key chord
+			ctrlXPending = true
 
 		case ch == 0x7f || ch == 0x08: // Backspace / Ctrl+H
 			if pos > 0 {
-				buf = append(buf[:pos-1], buf[pos:]...)
-				pos--
-				redraw()
+				if buf[pos-1] == '\n' {
+					// Backspace across a newline: clear the current visual line,
+					// move up to the previous line, and merge the two lines.
+					io.WriteString(le.out, "\r\033[K") // erase current visual line
+					fmt.Fprintf(le.out, "\033[1A")     // cursor up one line
+					buf = append(buf[:pos-1], buf[pos:]...)
+					pos--
+					lineCount--
+					viewOffset = 0
+					redraw()
+				} else {
+					buf = append(buf[:pos-1], buf[pos:]...)
+					pos--
+					redraw()
+				}
 			}
 
 		case ch == 0x1b: // Escape — consume the rest of the sequence
 			switch seq := le.readEscSeq(); seq {
-			case "[A", "OA": // Up arrow — history previous
-				if histIdx > 0 {
+			case "[A", "OA": // Up arrow — history previous (disabled in multi-line mode)
+				if lineCount == 0 && histIdx > 0 {
 					if histIdx == len(le.history) {
 						le.histBuf = string(buf) // save current draft
 					}
 					histIdx--
 					buf = []rune(le.history[histIdx])
 					pos = len(buf)
+					viewOffset = 0
+					// Recompute lineCount from the restored entry.
+					lineCount = strings.Count(string(buf), "\n")
 					redraw()
 				}
-			case "[B", "OB": // Down arrow — history next
-				if histIdx < len(le.history) {
+			case "[B", "OB": // Down arrow — history next (disabled in multi-line mode)
+				if lineCount == 0 && histIdx < len(le.history) {
 					histIdx++
 					if histIdx == len(le.history) {
 						buf = []rune(le.histBuf)
@@ -217,23 +328,34 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 						buf = []rune(le.history[histIdx])
 					}
 					pos = len(buf)
+					viewOffset = 0
+					lineCount = strings.Count(string(buf), "\n")
 					redraw()
 				}
-			case "[C", "OC": // Right arrow
-				if pos < len(buf) {
+			case "[C", "OC": // Right arrow — stay within current line
+				if pos < len(buf) && buf[pos] != '\n' {
 					pos++
 					redraw()
 				}
-			case "[D", "OD": // Left arrow
-				if pos > 0 {
+			case "[D", "OD": // Left arrow — stay within current line
+				if pos > 0 && buf[pos-1] != '\n' {
 					pos--
 					redraw()
 				}
-			case "[H", "OH", "[1~": // Home
-				pos = 0
+			case "[H", "OH", "[1~": // Home — beginning of current line
+				pos = currentLineStart()
+				viewOffset = 0
 				redraw()
-			case "[F", "OF", "[4~": // End
-				pos = len(buf)
+			case "[F", "OF", "[4~": // End — end of current line
+				lineStart := currentLineStart()
+				lineEnd := len(buf)
+				for i := lineStart; i < len(buf); i++ {
+					if buf[i] == '\n' {
+						lineEnd = i
+						break
+					}
+				}
+				pos = lineEnd
 				redraw()
 			}
 
@@ -250,6 +372,54 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 			}
 		}
 	}
+}
+
+// openEditor writes buf to a temp file, opens it in $EDITOR (falling back to
+// $VISUAL, then vi), and returns the saved content with trailing newlines trimmed.
+// The caller must have already restored the terminal before calling this.
+func (le *LineEditor) openEditor(buf []rune) (string, error) {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+	}
+	if editor == "" {
+		editor = "vi"
+	}
+
+	tmp, err := os.CreateTemp("", "termlib-edit-*.txt")
+	if err != nil {
+		return "", err
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+
+	if len(buf) > 0 {
+		if _, err := tmp.WriteString(string(buf)); err != nil {
+			tmp.Close()
+			return "", err
+		}
+	}
+	if err := tmp.Close(); err != nil {
+		return "", err
+	}
+
+	outW := os.Stdout
+	if f, ok := le.out.(*os.File); ok {
+		outW = f
+	}
+	cmd := exec.Command(editor, tmpPath)
+	cmd.Stdin = le.in
+	cmd.Stdout = outW
+	cmd.Stderr = outW
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+
+	data, err := os.ReadFile(tmpPath)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(string(data), "\r\n"), nil
 }
 
 // readEscSeq reads the bytes that follow an ESC character and returns a
