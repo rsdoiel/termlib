@@ -27,13 +27,13 @@ the space between fmt package and a rich library like tcell.
 
 ## Software Requirements
 
-- Go >= 1.25
-- CMTools >= 0.0.40
+- Go >= 1.26
+- CMTools >= 0.0.43
 
 ### Software Suggestions
 
-- Pandoc >= 3.1
-- GNU Make >= 3.0
+- Pandoc >= 3.9
+- GNU Make >= 3.8
 
 
 
