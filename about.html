@@ -2,7 +2,7 @@
 <html lang="en-US">
 <head>
     <title>termlib</title>
-    <link rel="stylesheet" href="/css/site.css">
+    <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
 <a href="#main-content" class="visually-hidden">skip to main content</a>
@@ -20,18 +20,9 @@
 </nav>
 <section id="main-content">
 <h1 id="about-this-software">About this software</h1>
-<h2 id="termlib-0.0.7">termlib 0.0.7</h2>
+<h2 id="termlib-0.0.8">termlib 0.0.8</h2>
 <ul>
-<li>Ctrl+J (0x0a) now inserts into the buffer and moves to a new visual
-line with “…” continuation prompt. Enter ( is the only submit key.</li>
-<li>redraw was refactored to be line-aware: it draws only the current
-visual line (from the last in buf to the next or end), choosing prompt
-for line 1 and “…” for subsequent lines.</li>
-<li>Backspace across a clears the current visual line ([K), moves up
-(\033[1A), and redraws the merged previous line.</li>
-<li>Left/Right arrows, Home/End, Ctrl+A/E/K are all clamped to the
-current line — they won’t jump across boundaries.</li>
-<li>History navigation (Up/Down) is disabled when lineCount &gt; 0.</li>
+<li>Adding support for tab completion in LineEditor.</li>
 </ul>
 <h2 id="authors">Authors</h2>
 <ul>
@@ -54,7 +45,7 @@ Tracker</a></li>
 <h2 id="software-requirements">Software Requirements</h2>
 <ul>
 <li>Go &gt;= 1.26</li>
-<li>CMTools &gt;= 0.0.43</li>
+<li>CMTools &gt;= 0.0.45b</li>
 </ul>
 <h2 id="software-suggestions">Software Suggestions</h2>
 <ul>

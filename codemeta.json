@@ -12,8 +12,8 @@
     }
   ],
   "dateCreated": "2025-12-19",
-  "dateModified": "2026-05-12",
-  "datePublished": "2026-05-12",
+  "dateModified": "2026-05-14",
+  "datePublished": "2026-05-14",
   "description": "A minimalist terminal display library written as a Go module. It explores\nthe space between fmt package and a rich library like tcell.",
   "name": "termlib",
   "programmingLanguage": [
@@ -21,16 +21,16 @@
   ],
   "softwareRequirements": [
     "Go >= 1.26",
-    "CMTools >= 0.0.43"
+    "CMTools >= 0.0.45b"
   ],
   "softwareSuggestions": [
     "Pandoc >= 3.9",
     "GNU Make >= 3.8"
   ],
-  "version": "0.0.7",
+  "version": "0.0.8",
   "developmentStatus": "concept",
   "issueTracker": "https://github.com/rsdoiel/termlib/issues",
-  "releaseNotes": "- Ctrl+J (0x0a) now inserts \\n into the buffer and moves to a new visual line with \"...  \" continuation prompt. Enter (\\r) is the only submit key.\n- redraw was refactored to be line-aware: it draws only the current visual line (from the last \\n in buf to the next \\n or end), choosing prompt for line 1 and \"...  \" for subsequent\n  lines.\n- Backspace across a \\n clears the current visual line (\\r\\033[K), moves up (\\033[1A), and redraws the merged previous line.\n- Left/Right arrows, Home/End, Ctrl+A/E/K are all clamped to the current line — they won't jump across \\n boundaries.\n- History navigation (Up/Down) is disabled when lineCount > 0.",
+  "releaseNotes": "- Adding support for tab completion in LineEditor.",
   "copyrightYear": 2025,
   "copyrightHolder": "R. S. Doiel"
 }

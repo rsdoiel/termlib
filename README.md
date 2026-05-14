@@ -7,16 +7,11 @@ the space between fmt package and a rich library like tcell.
 
 ## Release Notes
 
-- version: 0.0.7
+- version: 0.0.8
 - status: concept
-- released: 2026-05-12
+- released: 2026-05-14
 
-- Ctrl+J (0x0a) now inserts \n into the buffer and moves to a new visual line with &quot;...  &quot; continuation prompt. Enter (\r) is the only submit key.
-- redraw was refactored to be line-aware: it draws only the current visual line (from the last \n in buf to the next \n or end), choosing prompt for line 1 and &quot;...  &quot; for subsequent
-  lines.
-- Backspace across a \n clears the current visual line (\r\033[K), moves up (\033[1A), and redraws the merged previous line.
-- Left/Right arrows, Home/End, Ctrl+A/E/K are all clamped to the current line — they won&#x27;t jump across \n boundaries.
-- History navigation (Up/Down) is disabled when lineCount &gt; 0.
+- Adding support for tab completion in LineEditor.
 
 
 ### Authors
@@ -28,7 +23,7 @@ the space between fmt package and a rich library like tcell.
 ## Software Requirements
 
 - Go >= 1.26
-- CMTools >= 0.0.43
+- CMTools >= 0.0.45b
 
 ### Software Suggestions
 

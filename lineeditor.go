@@ -24,6 +24,9 @@ var ErrInterrupted = errors.New("interrupted")
  *   Home / End           — jump to start or end of line
  *   Up / Down arrows     — cycle through command history (only on first line)
  *   Backspace            — delete the character before the cursor
+ *   Tab                  — complete the current word using Completer (if set);
+ *                          first Tab lists all matches and fills the longest
+ *                          common prefix; subsequent Tabs cycle through matches
  *   Ctrl+A               — move to beginning of current line
  *   Ctrl+E               — move to end of current line
  *   Ctrl+J               — insert a newline for multi-line input; Enter submits
@@ -50,10 +53,11 @@ var ErrInterrupted = errors.New("interrupted")
  *   le.AppendHistory(line)
  */
 type LineEditor struct {
-	in      *os.File
-	out     io.Writer
-	history []string
-	histBuf string // draft saved while navigating history
+	in        *os.File
+	out       io.Writer
+	history   []string
+	histBuf   string              // draft saved while navigating history
+	Completer func(line string) []string // optional; receives text up to cursor, returns word candidates
 }
 
 /** NewLineEditor creates a LineEditor that reads from in and writes to out.
@@ -198,6 +202,13 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 
 	b := make([]byte, 1)
 	ctrlXPending := false
+
+	// Tab completion state — reset whenever a non-Tab key is pressed.
+	var tabMatches []string
+	var tabWordStart int // rune index in buf where the word being completed begins
+	var tabIdx int       // next match index for cycling
+	lastWasTab := false
+
 	for {
 		if _, err := le.in.Read(b); err != nil {
 			return string(buf), err
@@ -207,6 +218,7 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 		// Ctrl+X chord: wait for the second key.
 		if ctrlXPending {
 			ctrlXPending = false
+			lastWasTab = false
 			if ch == 0x05 { // Ctrl+E — open $EDITOR
 				term.Restore(fd, oldState)
 				result, edErr := le.openEditor(buf)
@@ -226,7 +238,57 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 			continue
 		}
 
+		// Snapshot and reset tab state; the Tab case will set lastWasTab back to true.
+		prevWasTab := lastWasTab
+		lastWasTab = false
+
 		switch {
+		case ch == 0x09: // Tab — complete the current word using Completer
+			if le.Completer == nil {
+				break
+			}
+			lastWasTab = true
+			// Find the start of the word being completed (last whitespace before cursor).
+			wordStart := 0
+			for i := pos - 1; i >= 0; i-- {
+				if buf[i] == ' ' || buf[i] == '\t' {
+					wordStart = i + 1
+					break
+				}
+			}
+			if !prevWasTab {
+				// First Tab: compute a fresh candidate list.
+				tabMatches = le.Completer(string(buf[:pos]))
+				tabWordStart = wordStart
+				tabIdx = 0
+			}
+			if len(tabMatches) == 0 {
+				break // no candidates
+			}
+			if !prevWasTab && len(tabMatches) > 1 {
+				// First Tab with multiple matches: print the list, then fill common prefix.
+				io.WriteString(le.out, "\r\n")
+				for _, m := range tabMatches {
+					fmt.Fprintf(le.out, "  %s\r\n", m)
+				}
+				io.WriteString(le.out, prompt)
+				prefix := leCommonPrefix(tabMatches)
+				completion := []rune(prefix)
+				buf = append(append(append([]rune{}, buf[:tabWordStart]...), completion...), buf[pos:]...)
+				pos = tabWordStart + len(completion)
+			} else {
+				// Single match, or subsequent Tab: insert/cycle to the next candidate.
+				completion := []rune(tabMatches[tabIdx%len(tabMatches)])
+				buf = append(append(append([]rune{}, buf[:tabWordStart]...), completion...), buf[pos:]...)
+				pos = tabWordStart + len(completion)
+				tabIdx++
+				if len(tabMatches) == 1 {
+					tabMatches = nil // done; reset for next word
+					lastWasTab = false
+				}
+			}
+			redraw()
+
 		case ch == '\r': // Enter — submit the full (possibly multi-line) buffer
 			io.WriteString(le.out, "\r\n")
 			return string(buf), nil
@@ -497,4 +559,29 @@ func leInsertRune(buf []rune, pos int, r rune) []rune {
 	copy(buf[pos+1:], buf[pos:])
 	buf[pos] = r
 	return buf
+}
+
+// leCommonPrefix returns the longest string that is a prefix of every element
+// of strs. Returns "" when strs is empty.
+func leCommonPrefix(strs []string) string {
+	if len(strs) == 0 {
+		return ""
+	}
+	prefix := []rune(strs[0])
+	for _, s := range strs[1:] {
+		sr := []rune(s)
+		max := len(prefix)
+		if len(sr) < max {
+			max = len(sr)
+		}
+		i := 0
+		for i < max && prefix[i] == sr[i] {
+			i++
+		}
+		prefix = prefix[:i]
+		if len(prefix) == 0 {
+			return ""
+		}
+	}
+	return string(prefix)
 }
