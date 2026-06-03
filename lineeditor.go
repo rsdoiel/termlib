@@ -97,6 +97,41 @@ func (le *LineEditor) AppendHistory(line string) {
 	le.history = append(le.history, line)
 }
 
+/** SetHistory replaces the in-memory history list with the provided lines.
+ * Empty strings are ignored. Intended for seeding history from a persisted
+ * file at startup.
+ *
+ * Parameters:
+ *   lines ([]string) — history entries to load, oldest first.
+ *
+ * Example:
+ *   le.SetHistory([]string{"/help", "/status", "/rag on"})
+ */
+func (le *LineEditor) SetHistory(lines []string) {
+	le.history = le.history[:0]
+	for _, l := range lines {
+		if l = strings.TrimSpace(l); l != "" {
+			le.history = append(le.history, l)
+		}
+	}
+}
+
+/** History returns a copy of the current history list, oldest entry first.
+ * Intended for persisting history to a file on exit.
+ *
+ * Returns:
+ *   []string — snapshot of the history slice; modifications do not affect the editor.
+ *
+ * Example:
+ *   entries := le.History()
+ *   os.WriteFile("history.txt", []byte(strings.Join(entries, "\n")), 0o600)
+ */
+func (le *LineEditor) History() []string {
+	out := make([]string, len(le.history))
+	copy(out, le.history)
+	return out
+}
+
 /** Prompt displays prompt, then reads and returns one edited line.
  * The terminal is placed in raw mode for the duration of the call and
  * restored before returning. If raw mode is unavailable (e.g. stdin is a
