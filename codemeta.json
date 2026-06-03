@@ -12,8 +12,8 @@
     }
   ],
   "dateCreated": "2025-12-19",
-  "dateModified": "2026-05-14",
-  "datePublished": "2026-05-14",
+  "dateModified": "2026-06-02",
+  "datePublished": "2026-06-03",
   "description": "A minimalist terminal display library written as a Go module. It explores\nthe space between fmt package and a rich library like tcell.",
   "name": "termlib",
   "programmingLanguage": [
@@ -27,10 +27,10 @@
     "Pandoc >= 3.9",
     "GNU Make >= 3.8"
   ],
-  "version": "0.0.8",
+  "version": "0.0.9",
   "developmentStatus": "concept",
   "issueTracker": "https://github.com/rsdoiel/termlib/issues",
-  "releaseNotes": "- Adding support for tab completion in LineEditor.",
+  "releaseNotes": "- Added SetHistory() to seed LineEditor history from a persisted file at startup.\n- Added History() to retrieve a snapshot of history for persistence on exit.",
   "copyrightYear": 2025,
   "copyrightHolder": "R. S. Doiel"
 }

@@ -11,22 +11,23 @@ authors:
 
 
 repository_code: https://github.com/rsdoiel/termlib
-version: 0.0.8
+version: 0.0.9
 
 
 programming_language:
   - Go >= 1.25
 
 
-date_released: 2026-05-14
+date_released: 2026-06-03
 ---
 
 About this software
 ===================
 
-## termlib 0.0.8
+## termlib 0.0.9
 
-- Adding support for tab completion in LineEditor.
+- Added SetHistory() to seed LineEditor history from a persisted file at startup.
+- Added History() to retrieve a snapshot of history for persistence on exit.
 
 ## Authors
 

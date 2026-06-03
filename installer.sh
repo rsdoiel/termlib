@@ -1,11 +1,11 @@
 #!/bin/sh
-# generated with CMTools 0.0.8 c3b6d7f
+# generated with CMTools 0.0.9 4c5d763
 
 #
 # Set the package name and version to install
 #
 PACKAGE="termlib"
-VERSION="0.0.8"
+VERSION="0.0.9"
 GIT_GROUP="rsdoiel"
 RELEASE="https://github.com/$GIT_GROUP/$PACKAGE/releases/tag/v$VERSION"
 if [ "$PKG_VERSION" != "" ]; then
