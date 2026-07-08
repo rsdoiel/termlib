@@ -168,7 +168,22 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 
 	const contPrompt = "...  " // shown on lines 2+ of multi-line input
 
-	io.WriteString(le.out, prompt)
+	// redraw's cursor math (below) assumes curPrompt fits on one terminal
+	// row: curPromptLen := utf8.RuneCountInString(curPrompt); vw :=
+	// termWidth - curPromptLen. A prompt argument wider than termWidth (or
+	// containing an embedded newline) broke that assumption -- "\r" only
+	// returns to column 0 of the terminal's *current* row, so reprinting a
+	// prompt that itself spans multiple rows on every keystroke pushed the
+	// display down further each time, corrupting the screen and leaving
+	// typed input effectively invisible (vw clamped to 1). Split prompt so
+	// only a genuinely one-row-safe tail is ever handed to redraw; anything
+	// before the last embedded newline, or the whole prompt if even its
+	// last line alone is too wide, is printed once up front and never
+	// touched again.
+	promptHead, promptTail := splitSafePrompt(prompt, termWidth)
+	io.WriteString(le.out, promptHead)
+	io.WriteString(le.out, promptTail)
+	prompt = promptTail
 
 	buf := []rune{}
 	pos := 0
@@ -586,6 +601,30 @@ func (le *LineEditor) fallback(prompt string) (string, error) {
 		}
 		sb.WriteByte(b[0])
 	}
+}
+
+// splitSafePrompt splits prompt into a head that's printed once (already
+// scrolled into terminal history, never revisited by redraw) and a tail
+// that's safe for Prompt's per-keystroke redraw to reprint on the
+// terminal's current row without itself wrapping.
+//
+// Everything up to and including the last '\n' in prompt becomes head;
+// only the remainder can possibly share a row with typed input, so only
+// it needs to be narrower than termWidth. If that remainder is still
+// termWidth runes or wider, it's folded into head too (with a trailing
+// newline appended), and tail is returned empty -- input then starts on
+// its own blank row instead of trying to redraw a prompt too wide for
+// redraw's single-row cursor math to track correctly.
+func splitSafePrompt(prompt string, termWidth int) (head, tail string) {
+	head, tail = "", prompt
+	if i := strings.LastIndexByte(prompt, '\n'); i >= 0 {
+		head, tail = prompt[:i+1], prompt[i+1:]
+	}
+	if utf8.RuneCountInString(tail) >= termWidth {
+		head += tail + "\n"
+		tail = ""
+	}
+	return head, tail
 }
 
 // leInsertRune inserts r into buf at position pos and returns the new slice.

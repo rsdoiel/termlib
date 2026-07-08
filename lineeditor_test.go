@@ -215,6 +215,112 @@ func TestPrompt_utf8Input(t *testing.T) {
 	}
 }
 
+// ─── splitSafePrompt ─────────────────────────────────────────────────────────
+//
+// This is the fix for a real reported bug: a prompt argument wider than the
+// terminal (or containing an embedded newline) broke Prompt's redraw cursor
+// math, which assumes curPrompt fits on one terminal row. "\r" only returns
+// to column 0 of the *current* row, so reprinting a too-wide prompt on every
+// keystroke pushed the display down further each time -- garbled repeated
+// text, typed input never visible. Unlike Prompt itself, this pure function
+// is fully unit-testable without a real TTY.
+
+func TestSplitSafePrompt_ShortPromptUnchanged(t *testing.T) {
+	head, tail := splitSafePrompt("harvey > ", 80)
+	if head != "" {
+		t.Errorf("head = %q, want empty", head)
+	}
+	if tail != "harvey > " {
+		t.Errorf("tail = %q, want %q", tail, "harvey > ")
+	}
+}
+
+func TestSplitSafePrompt_EmptyPrompt(t *testing.T) {
+	head, tail := splitSafePrompt("", 80)
+	if head != "" || tail != "" {
+		t.Errorf("head = %q, tail = %q, want both empty", head, tail)
+	}
+}
+
+func TestSplitSafePrompt_ExactlyTermWidthIsUnsafe(t *testing.T) {
+	// >= termWidth is treated as unsafe, not just >, since a prompt that
+	// exactly fills the row leaves no room for the cursor/any input.
+	prompt := strings.Repeat("x", 10)
+	head, tail := splitSafePrompt(prompt, 10)
+	if tail != "" {
+		t.Errorf("tail = %q, want empty (prompt exactly fills termWidth)", tail)
+	}
+	if head != prompt+"\n" {
+		t.Errorf("head = %q, want %q", head, prompt+"\n")
+	}
+}
+
+func TestSplitSafePrompt_OverlongSingleLinePrompt(t *testing.T) {
+	prompt := strings.Repeat("x", 100)
+	head, tail := splitSafePrompt(prompt, 80)
+	if tail != "" {
+		t.Errorf("tail = %q, want empty", tail)
+	}
+	if head != prompt+"\n" {
+		t.Errorf("head = %q, want the whole prompt plus a trailing newline", head)
+	}
+}
+
+func TestSplitSafePrompt_EmbeddedNewlineOnlyLastLineMatters(t *testing.T) {
+	head, tail := splitSafePrompt("line one\nline two: ", 80)
+	if head != "line one\n" {
+		t.Errorf("head = %q, want %q", head, "line one\n")
+	}
+	if tail != "line two: " {
+		t.Errorf("tail = %q, want %q", tail, "line two: ")
+	}
+}
+
+func TestSplitSafePrompt_EmbeddedNewlineWithOverlongLastLine(t *testing.T) {
+	lastLine := strings.Repeat("y", 100)
+	head, tail := splitSafePrompt("line one\n"+lastLine, 80)
+	if tail != "" {
+		t.Errorf("tail = %q, want empty", tail)
+	}
+	if head != "line one\n"+lastLine+"\n" {
+		t.Errorf("head = %q, want %q", head, "line one\n"+lastLine+"\n")
+	}
+}
+
+func TestSplitSafePrompt_TrailingNewlineLeavesEmptyTail(t *testing.T) {
+	head, tail := splitSafePrompt("done.\n", 80)
+	if head != "done.\n" {
+		t.Errorf("head = %q, want %q", head, "done.\n")
+	}
+	if tail != "" {
+		t.Errorf("tail = %q, want empty", tail)
+	}
+}
+
+// TestPrompt_OverlongPromptStaysUsableViaFallback documents that the
+// non-raw-mode fallback path (what this test harness always exercises,
+// since os.Pipe() isn't a TTY) was never affected by the bug in the first
+// place -- fallback just writes the prompt once and reads bytes, with no
+// per-keystroke redraw/cursor math at all. The actual fix's effect (no
+// runaway redraw in a real terminal) can only be confirmed interactively.
+func TestPrompt_OverlongPromptStaysUsableViaFallback(t *testing.T) {
+	le, w, out := pipeEditor(t)
+	w.WriteString("value\n")
+	w.Close()
+
+	longPrompt := "Some field (" + strings.Repeat("very long explanation ", 10) + "): "
+	line, err := le.Prompt(longPrompt)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if line != "value" {
+		t.Errorf("line = %q, want %q", line, "value")
+	}
+	if !strings.Contains(out.String(), longPrompt) {
+		t.Errorf("expected the prompt in output, got: %q", out.String())
+	}
+}
+
 // ─── leInsertRune ────────────────────────────────────────────────────────────
 
 func TestLeInsertRune(t *testing.T) {
