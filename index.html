@@ -25,10 +25,19 @@ explores the space between fmt package and a rich library like
 tcell.</p>
 <h2 id="release-notes">Release Notes</h2>
 <ul>
-<li><p>version: 0.0.8</p></li>
+<li><p>version: 0.0.10</p></li>
 <li><p>status: concept</p></li>
-<li><p>released: 2026-05-14</p></li>
-<li><p>Adding support for tab completion in LineEditor.</p></li>
+<li><p>released: 2026-09-27</p></li>
+<li><p>Bug fix: LineEditor.Prompt() corrupted the display when the
+prompt was wider than the terminal or contained an embedded newline.
+redraw()’s per-keystroke cursor math assumes the prompt fits on one
+terminal row; a wider prompt broke that assumption, since “ only returns
+to column 0 of the terminal’s current row, so reprinting a multi-row
+prompt on every keystroke pushed the display down further each time and
+left typed input effectively invisible. splitSafePrompt() now prints
+anything up to and including the prompt’s last embedded newline once, up
+front, and hands only a genuinely one-row-safe tail to
+redraw().</p></li>
 </ul>
 <h3 id="authors">Authors</h3>
 <ul>
