@@ -11,23 +11,22 @@ authors:
 
 
 repository_code: https://github.com/rsdoiel/termlib
-version: 0.0.9
+version: 0.0.10
 
 
 programming_language:
   - Go >= 1.25
 
 
-date_released: 2026-06-03
+date_released: 2026-09-27
 ---
 
 About this software
 ===================
 
-## termlib 0.0.9
+## termlib 0.0.10
 
-- Added SetHistory() to seed LineEditor history from a persisted file at startup.
-- Added History() to retrieve a snapshot of history for persistence on exit.
+- Bug fix: LineEditor.Prompt() corrupted the display when the prompt was wider than the terminal or contained an embedded newline. redraw()'s per-keystroke cursor math assumes the prompt fits on one terminal row; a wider prompt broke that assumption, since "\r" only returns to column 0 of the terminal's current row, so reprinting a multi-row prompt on every keystroke pushed the display down further each time and left typed input effectively invisible. splitSafePrompt() now prints anything up to and including the prompt's last embedded newline once, up front, and hands only a genuinely one-row-safe tail to redraw().
 
 ## Authors
 
