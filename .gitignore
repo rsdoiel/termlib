@@ -6,3 +6,6 @@ scratch.txt
 bin/
 dist/
 man/
+
+# PageFind output is generated, large and changes on every build; never commit it.
+pagefind/
