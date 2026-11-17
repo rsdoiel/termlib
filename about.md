@@ -15,7 +15,7 @@ version: 0.0.10
 
 
 programming_language:
-  - Go >= 1.25
+  - Go >= 1.27.3
 
 
 date_released: 2026-09-27
@@ -46,14 +46,14 @@ the space between fmt package and a rich library like tcell.
 
 ## Programming languages
 
-- Go >= 1.25
+- Go >= 1.27.3
 
 
 
 
 ## Software Requirements
 
-- Go >= 1.26
+- Go >= 1.27.3
 - CMTools >= 0.0.45b
 
 

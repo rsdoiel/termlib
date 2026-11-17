@@ -22,7 +22,7 @@ the space between fmt package and a rich library like tcell.
 
 ## Software Requirements
 
-- Go >= 1.26
+- Go >= 1.27.3
 - CMTools >= 0.0.45b
 
 ### Software Suggestions

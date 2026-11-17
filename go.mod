@@ -1,6 +1,6 @@
 module github.com/rsdoiel/termlib
 
-go 1.26.2
+go 1.27.3
 
 require golang.org/x/term v0.38.0
 
