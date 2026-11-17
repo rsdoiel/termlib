@@ -32,7 +32,7 @@ Installing from source
 
 ### Required software
 
-- Go &gt;&#x3D; 1.25
+- Go >= 1.27.3
 - CMTools &gt;&#x3D; 0.0.40
 
 ### Steps
