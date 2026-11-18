@@ -1,5 +1,18 @@
-// keys.go — keystroke reading for raw-mode TUI applications.
-// Copyright (C) 2025 R. S. Doiel
+// Copyright (C) 2025-2026 R. S. Doiel
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package termlib
 
 import (
@@ -98,6 +111,9 @@ func ReadKey(in *os.File) (Key, error) {
 /** KeyReader starts a goroutine that reads keystrokes from in and sends them
  * on the returned channel. in must already be in raw mode. The goroutine
  * exits and closes the channel when in returns an error (including EOF).
+ * There is no way to stop it: if the caller stops receiving, the goroutine
+ * stays blocked in ReadKey or on a full channel until in fails, so call
+ * KeyReader once per input and keep receiving, or use ReadKey directly.
  *
  * Parameters:
  *   in (*os.File) — input file in raw mode, typically os.Stdin.
@@ -110,7 +126,7 @@ func ReadKey(in *os.File) (Key, error) {
  *   defer restore()
  *   keys := termlib.KeyReader(os.Stdin)
  *   for k := range keys {
- *       if k == Key('q') { break }
+ *       if k == termlib.Key('q') { break } // the reader goroutine remains
  *   }
  */
 func KeyReader(in *os.File) <-chan Key {

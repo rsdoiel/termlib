@@ -1,19 +1,18 @@
-/*
-termlib is a light weight terminal interface library. Sort of a ncurse light.
-Copyright (C) 2025 R. S. Doiel
+// Copyright (C) 2025-2026 R. S. Doiel
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-*/
 package termlib
 
 // Note: raw-mode keyboard navigation (arrow keys, Home/End, Ctrl+A/E/K,
@@ -367,20 +366,20 @@ func TestReadEscSeq_arrows(t *testing.T) {
 		input string
 		want  string
 	}{
-		{"up arrow CSI",    "[A", "[A"},
-		{"down arrow CSI",  "[B", "[B"},
+		{"up arrow CSI", "[A", "[A"},
+		{"down arrow CSI", "[B", "[B"},
 		{"right arrow CSI", "[C", "[C"},
-		{"left arrow CSI",  "[D", "[D"},
-		{"home CSI",        "[H", "[H"},
-		{"end CSI",         "[F", "[F"},
-		{"home VT220",      "[1~", "[1~"},
-		{"end VT220",       "[4~", "[4~"},
-		{"up SS3",          "OA", "OA"},
-		{"down SS3",        "OB", "OB"},
-		{"right SS3",       "OC", "OC"},
-		{"left SS3",        "OD", "OD"},
-		{"home SS3",        "OH", "OH"},
-		{"end SS3",         "OF", "OF"},
+		{"left arrow CSI", "[D", "[D"},
+		{"home CSI", "[H", "[H"},
+		{"end CSI", "[F", "[F"},
+		{"home VT220", "[1~", "[1~"},
+		{"end VT220", "[4~", "[4~"},
+		{"up SS3", "OA", "OA"},
+		{"down SS3", "OB", "OB"},
+		{"right SS3", "OC", "OC"},
+		{"left SS3", "OD", "OD"},
+		{"home SS3", "OH", "OH"},
+		{"end SS3", "OF", "OF"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

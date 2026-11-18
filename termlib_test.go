@@ -1,28 +1,26 @@
-/*
-termlib is a light weight terminal interface library. Sort of a ncurse light.
-Copyright (C) 2025 R. S. Doiel
+// Copyright (C) 2025-2026 R. S. Doiel
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-*/
 package termlib
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"os"
 	"testing"
 )
-
 
 func TestClrToBOL(t *testing.T) {
 	var buf bytes.Buffer
@@ -56,7 +54,6 @@ func TestStyleAndColor(t *testing.T) {
 	}
 }
 
-
 func TestNewWithStdout(t *testing.T) {
 	term := New(os.Stdout)
 	// Just verify that it can be created with os.Stdout
@@ -64,7 +61,6 @@ func TestNewWithStdout(t *testing.T) {
 		t.Fatal("New(os.Stdout) returned nil")
 	}
 }
-
 
 func TestTerminal(t *testing.T) {
 	var buf bytes.Buffer
@@ -143,4 +139,3 @@ func TestPrintln(t *testing.T) {
 		t.Errorf("Println output mismatch: got %q, want %q", got, expected)
 	}
 }
-

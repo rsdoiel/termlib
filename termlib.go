@@ -1,5 +1,21 @@
-// termlib is a light weight terminal interface library.
-// Copyright (C) 2025 R. S. Doiel
+// Copyright (C) 2025-2026 R. S. Doiel
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+// Package termlib is a light weight terminal interface library, sort of
+// an ncurses light. It explores the space between the fmt package and a rich
+// library like tcell.
 package termlib
 
 import (
@@ -14,25 +30,25 @@ import (
 
 // ANSI escape codes for colors and styles
 const (
-	Reset      = "\033[0m"
-	Bold       = "\033[1m"
-	Italic     = "\033[3m"
-	Black      = "\033[30m"
-	Red        = "\033[31m"
-	Green      = "\033[32m"
-	Yellow     = "\033[33m"
-	Blue       = "\033[34m"
-	Magenta    = "\033[35m"
-	Cyan       = "\033[36m"
-	White      = "\033[37m"
-	BlackBg    = "\033[40m"
-	RedBg      = "\033[41m"
-	GreenBg    = "\033[42m"
-	YellowBg   = "\033[43m"
-	BlueBg     = "\033[44m"
-	MagentaBg  = "\033[45m"
-	CyanBg     = "\033[46m"
-	WhiteBg    = "\033[47m"
+	Reset     = "\033[0m"
+	Bold      = "\033[1m"
+	Italic    = "\033[3m"
+	Black     = "\033[30m"
+	Red       = "\033[31m"
+	Green     = "\033[32m"
+	Yellow    = "\033[33m"
+	Blue      = "\033[34m"
+	Magenta   = "\033[35m"
+	Cyan      = "\033[36m"
+	White     = "\033[37m"
+	BlackBg   = "\033[40m"
+	RedBg     = "\033[41m"
+	GreenBg   = "\033[42m"
+	YellowBg  = "\033[43m"
+	BlueBg    = "\033[44m"
+	MagentaBg = "\033[45m"
+	CyanBg    = "\033[46m"
+	WhiteBg   = "\033[47m"
 )
 
 // Terminal represents a terminal controller.
@@ -49,7 +65,7 @@ type Terminal struct {
 	bgColor        string
 	isBold         bool
 	isItalic       bool
-	out            io.Writer  // underlying destination (e.g. os.Stdout)
+	out            io.Writer // underlying destination (e.g. os.Stdout)
 	buf            bytes.Buffer
 	styleApplied   bool
 }
@@ -272,4 +288,3 @@ func (t *Terminal) resetStyleState() {
 	t.isItalic = false
 	t.styleApplied = false
 }
-

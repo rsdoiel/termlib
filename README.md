@@ -7,17 +7,19 @@ the space between fmt package and a rich library like tcell.
 
 ## Release Notes
 
-- version: 0.0.10
+- version: 0.0.11
 - status: concept
-- released: 2026-09-27
+- released: 2026-11-18
 
-- Bug fix: LineEditor.Prompt() corrupted the display when the prompt was wider than the terminal or contained an embedded newline. redraw()'s per-keystroke cursor math assumes the prompt fits on one terminal row; a wider prompt broke that assumption, since "\r" only returns to column 0 of the terminal's current row, so reprinting a multi-row prompt on every keystroke pushed the display down further each time and left typed input effectively invisible. splitSafePrompt() now prints anything up to and including the prompt's last embedded newline once, up front, and hands only a genuinely one-row-safe tail to redraw().
+- tldemo now follows the workspace command line practice: -h, -l and -v short spellings beside -help, -license and -version; an unknown option or a surplus argument exits 2 with one plain line on standard error instead of the flag package's usage dump (before, a surplus argument was ignored and the demo ran); the help has an EXIT STATUS section. The program is a 12-line main over internal/cli.
+- Go 1.27.3 is the minimum version; golang.org/x/term is v0.48.0 and golang.org/x/sys v0.50.0.
+- Release process (workspace DR-0012): make release no longer runs generate or commits; check-committed fails a release unless the tree is committed and HEAD is pushed; release.bash has --dry-run, creates the draft at the pushed commit and commits nothing; the armv7l target is gone.
+- The termlib package API is unchanged from v0.0.10. Source files are gofmt-clean and every one carries the full AGPL-3.0-or-later notice (four had it truncated, six had only a copyright line); the doc comments of Prompt, Truncate and KeyReader are corrected.
 
 
 ### Authors
 
 - Doiel, R. S.
-
 
 
 ## Software Requirements

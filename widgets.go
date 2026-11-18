@@ -1,5 +1,18 @@
-// widgets.go — reusable TUI drawing helpers built on Terminal.
-// Copyright (C) 2025 R. S. Doiel
+// Copyright (C) 2025-2026 R. S. Doiel
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package termlib
 
 import (
@@ -99,11 +112,12 @@ func DrawProgressBar(t *Terminal, row, col, width int, value, total float64) {
 
 /** Truncate shortens s to at most maxW Unicode code points. If truncation
  * occurs, the last code point is replaced with "…". Returns s unchanged
- * when it fits within maxW.
+ * when it fits within maxW. When maxW is 1 or less and s does not fit, the
+ * result is "…" alone, which is one code point even if maxW is 0.
  *
  * Parameters:
  *   s    (string) — the string to truncate.
- *   maxW (int)    — maximum number of Unicode code points to return.
+ *   maxW (int)    — maximum number of Unicode code points to return (see above for maxW <= 1).
  *
  * Returns:
  *   string — s, possibly truncated with a trailing "…".

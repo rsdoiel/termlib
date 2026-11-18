@@ -16,14 +16,22 @@ tldemo [OPTIONS]
 
 # OPTIONS
 
--help,
+-h, -help
 : Display this help
 
--version
+-v, -version
 : Display tldemo version
 
--license
+-l, -license
 : Display tldemo license
+
+# EXIT STATUS
+
+0
+: Success.
+
+2
+: Usage: an unknown option or a surplus argument. Nothing was run.
 
 
 

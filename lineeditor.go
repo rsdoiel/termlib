@@ -1,5 +1,18 @@
-// lineeditor.go — readline-style line editing for terminal prompts.
-// Copyright (C) 2025 R. S. Doiel
+// Copyright (C) 2025-2026 R. S. Doiel
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 package termlib
 
 import (
@@ -56,7 +69,7 @@ type LineEditor struct {
 	in        *os.File
 	out       io.Writer
 	history   []string
-	histBuf   string              // draft saved while navigating history
+	histBuf   string                     // draft saved while navigating history
 	Completer func(line string) []string // optional; receives text up to cursor, returns word candidates
 }
 
@@ -141,9 +154,15 @@ func (le *LineEditor) History() []string {
  * window over the buffer that pans to keep the cursor visible. Left/Right
  * arrows let the user navigate to any part of the line.
  *
+ * A prompt that contains a newline, or whose last line is as wide as the
+ * terminal, is handled: everything up to the last newline (or the whole
+ * prompt, when its last line is too wide) is printed once, and input starts
+ * on the row after it. Only the remaining one-row tail is redrawn per keystroke.
+ *
  * Parameters:
  *   prompt (string) — text printed before the cursor; must contain no ANSI
- *                     escape sequences (their widths are not tracked).
+ *                     escape sequences (their widths are not tracked, and the
+ *                     width test counts runes).
  *
  * Returns:
  *   string — the line the user typed, without the trailing newline.
@@ -187,9 +206,9 @@ func (le *LineEditor) Prompt(prompt string) (string, error) {
 
 	buf := []rune{}
 	pos := 0
-	viewOffset := 0        // horizontal scroll offset, relative to current line's start
+	viewOffset := 0 // horizontal scroll offset, relative to current line's start
 	histIdx := len(le.history)
-	lineCount := 0         // number of '\n' characters currently in buf
+	lineCount := 0 // number of '\n' characters currently in buf
 
 	// currentLineStart returns the buf index where the current visual line begins
 	// (one past the last '\n' before pos, or 0 if none).
