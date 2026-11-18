@@ -1,6 +1,6 @@
-%tldemo(1) user manual | version 0.0.10 6fa2d0c
+%tldemo(1) user manual | version 0.0.11 a360a13
 % R. S. Doiel
-% 2026-09-27
+% 2026-11-18
 
 # NAME
 
