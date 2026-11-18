@@ -20,3 +20,10 @@ To match the workspace standard (knowledge and opml are the models; Go 1.27.3 ac
 - [x] CLI to the workspace practice: `internal/cli`, `-h/-l/-v`, exit 2 on a bad command line, `cli_exit_test.go`.
 - [x] gofmt the sources.
 - [ ] Exported symbols carry one-line `//` comments, not the `/** */` blocks with parameters, returns and an example that CLAUDE.md asks for (about 60 symbols). Not release-blocking.
+
+## Tests (2026-11-18)
+
+- [x] Coverage 32.8% to 93%: keys, history, Terminal, FmtHelp, `internal/cli`, and `Prompt` through a pty (`pty_linux_test.go`, Linux only, uses `golang.org/x/sys/unix`, now a direct dependency).
+- [ ] `Terminal.Printf` with no arguments skips formatting, so `Printf("100%% done")` prints `100%% done`. Decide whether `%%` should collapse; not pinned by a test.
+- [ ] The pty test does not run on macOS. Its ioctls differ (`TIOCPTYGRANT`, `TIOCPTYUNLK`, `TIOCPTYGNAME`); add a `pty_darwin_test.go` if the Mac Mini should cover `Prompt`.
+- [ ] `go test -race` has not been run on the editor (the Pi's race runtime fails); run it on the Mac Mini for the platform-independent tests.

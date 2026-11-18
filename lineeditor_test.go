@@ -22,6 +22,7 @@ package termlib
 // full logic of Prompt, AppendHistory, and the unexported helpers.
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"strings"
@@ -452,5 +453,51 @@ func TestReadUTF8Tail(t *testing.T) {
 				t.Errorf("want %q (%U), got %q (%U)", tt.input, tt.input, got, got)
 			}
 		})
+	}
+}
+
+/** TestLeCommonPrefix checks the prefix Tab completion fills in, including
+ * multi-byte runes, which must be compared by rune and not by byte.
+ */
+func TestLeCommonPrefix(t *testing.T) {
+	for _, tc := range []struct {
+		in   []string
+		want string
+	}{
+		{nil, ""},
+		{[]string{"help"}, "help"},
+		{[]string{"/help", "/history", "/hello"}, "/h"},
+		{[]string{"abc", "abc"}, "abc"},
+		{[]string{"abc", "abcd"}, "abc"},
+		{[]string{"abc", "xyz"}, ""},
+		{[]string{"", "abc"}, ""},
+		{[]string{"éa", "éb"}, "é"},
+		{[]string{"日本語", "日本人"}, "日本"},
+	} {
+		if got := leCommonPrefix(tc.in); got != tc.want {
+			t.Errorf("leCommonPrefix(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+/** TestSetHistoryAndHistory checks that SetHistory replaces the list and
+ * drops blank entries, and that History returns a copy.
+ */
+func TestSetHistoryAndHistory(t *testing.T) {
+	le := NewLineEditor(os.Stdin, &bytes.Buffer{})
+	le.AppendHistory("old")
+	le.SetHistory([]string{"/help", "", "  ", " /status ", "/help"})
+	got := le.History()
+	want := []string{"/help", "/status", "/help"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("History() = %q, want %q", got, want)
+	}
+	got[0] = "changed"
+	if le.History()[0] != "/help" {
+		t.Error("changing the returned slice changed the editor's history")
+	}
+	le.SetHistory(nil)
+	if len(le.History()) != 0 {
+		t.Errorf("SetHistory(nil) left %q", le.History())
 	}
 }

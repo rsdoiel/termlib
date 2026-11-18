@@ -58,7 +58,9 @@ const (
  *   in (*os.File) — input file in raw mode, typically os.Stdin.
  *
  * Returns:
- *   Key   — the keystroke; KeyUnknown for unrecognised escape sequences.
+ *   Key   — the keystroke. An escape sequence that is not recognised (Delete,
+ *           function keys, a lone ESC) is consumed and returned as Key(0x1b).
+ *           KeyUnknown is returned for invalid UTF-8 and together with an error.
  *   error — non-nil on I/O failure or EOF.
  *
  * Example:
