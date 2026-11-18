@@ -233,3 +233,49 @@ func TestFmtHelp(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+/** TestPrintfFormatsLikeFmt checks that Printf is fmt.Printf: a doubled percent
+ * sign prints one, with or without arguments. Printf used to skip formatting when
+ * it had no arguments, so "100%% done" printed as "100%% done".
+ */
+func TestPrintfFormatsLikeFmt(t *testing.T) {
+	var out bytes.Buffer
+	term := New(&out)
+	term.Printf("100%% done;")
+	term.Printf(" %d%% of %s;", 50, "x")
+	term.Printf(" plain")
+	term.Refresh()
+	if got, want := out.String(), "100% done; 50% of x; plain"; got != want {
+		t.Errorf("Printf wrote %q, want %q", got, want)
+	}
+}
+
+/** TestResizeWhileDrawing is the data race that go test -race reports when a
+ * resize handler calls UpdateTerminalSize while another goroutine draws and reads
+ * the size: UpdateTerminalSize wrote the stored size without the lock every other
+ * method takes. The size source is replaced because standard output is not a
+ * terminal under go test. The race detector is what fails; without -race this test
+ * only checks that nothing panics.
+ */
+func TestResizeWhileDrawing(t *testing.T) {
+	saved := terminalSize
+	defer func() { terminalSize = saved }()
+	n := 0
+	terminalSize = func() (int, int, error) { n++; return 80 + n%7, 24 + n%5, nil }
+	var out bytes.Buffer
+	term := New(&out)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 500; i++ {
+			term.UpdateTerminalSize()
+		}
+	}()
+	for i := 0; i < 500; i++ {
+		term.Move(1, 1)
+		term.Print("x")
+		_ = term.GetTerminalWidth() + term.GetTerminalHeight()
+		term.Refresh()
+	}
+	<-done
+}

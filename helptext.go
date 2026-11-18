@@ -15,6 +15,12 @@
 
 package termlib
 
+/** DemoHelpText is the Pandoc man page source for tldemo, with {app_name},
+ * {version}, {release_date} and {release_hash} placeholders for FmtHelp to fill.
+ *
+ * Example:
+ *   fmt.Println(termlib.FmtHelp(termlib.DemoHelpText, "tldemo", termlib.Version, termlib.ReleaseDate, termlib.ReleaseHash))
+ */
 const (
 	DemoHelpText = `%{app_name}(1) user manual | version {version} {release_hash}
 % R. S. Doiel

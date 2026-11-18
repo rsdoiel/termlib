@@ -27,7 +27,13 @@ import (
 	"golang.org/x/term"
 )
 
-// ErrInterrupted is returned by LineEditor.Prompt when the user presses Ctrl+C.
+/** ErrInterrupted is the error LineEditor.Prompt returns when the user presses
+ * Ctrl+C. Compare with errors.Is or ==.
+ *
+ * Example:
+ *   line, err := le.Prompt("> ")
+ *   if err == termlib.ErrInterrupted { ... } // cancelled
+ */
 var ErrInterrupted = errors.New("interrupted")
 
 /** LineEditor provides readline-style line editing at a terminal prompt.

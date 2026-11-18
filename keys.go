@@ -36,6 +36,13 @@ import (
  */
 type Key rune
 
+/** The special keys ReadKey and KeyReader return. All are >= 1000, so they
+ * cannot collide with a printable character or a control character.
+ *
+ * Example:
+ *   k, _ := termlib.ReadKey(os.Stdin)
+ *   if k == termlib.KeyUp { ... } // up arrow
+ */
 const (
 	// Special keys — all >= 1000 to avoid collision with printable characters.
 	KeyUnknown  Key = 1000 + iota

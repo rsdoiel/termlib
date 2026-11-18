@@ -23,7 +23,14 @@ To match the workspace standard (knowledge and opml are the models; Go 1.27.3 ac
 
 ## Tests (2026-11-18)
 
-- [x] Coverage 32.8% to 93%: keys, history, Terminal, FmtHelp, `internal/cli`, and `Prompt` through a pty (`pty_linux_test.go`, Linux only, uses `golang.org/x/sys/unix`, now a direct dependency).
-- [ ] `Terminal.Printf` with no arguments skips formatting, so `Printf("100%% done")` prints `100%% done`. Decide whether `%%` should collapse; not pinned by a test.
-- [ ] The pty test does not run on macOS. Its ioctls differ (`TIOCPTYGRANT`, `TIOCPTYUNLK`, `TIOCPTYGNAME`); add a `pty_darwin_test.go` if the Mac Mini should cover `Prompt`.
-- [ ] `go test -race` has not been run on the editor (the Pi's race runtime fails); run it on the Mac Mini for the platform-independent tests.
+- [x] Coverage 32.8% to 93%: keys, history, Terminal, FmtHelp, `internal/cli`, and `Prompt` through a pty (`pty_unix_test.go`; `golang.org/x/sys/unix` is a direct dependency).
+- [x] `Terminal.Printf` formats like `fmt.Printf` with or without arguments (`%%` collapses). Decided with the author 2026-11-18.
+- [x] The pty tests run on Linux and macOS (`pty_linux_test.go`, `pty_darwin_test.go` open the pair and read termios; macOS sets `PENDIN` itself, masked in the restore test).
+- [x] `go test -race` run on the Mac Mini (darwin/arm64, Go 1.27.3): clean, three runs, pty tests included.
+- [x] `UpdateTerminalSize` wrote the size without the lock; reproduced under `-race` (`TestResizeWhileDrawing`) and fixed.
+- [x] Exported symbols carry the `/** */` blocks CLAUDE.md asks for. Left alone: `FmtHelp` and the other symbols in the generated `version.go`.
+
+## Release 0.0.12 (2026-11-18)
+
+- [x] Printf formats like fmt; UpdateTerminalSize race fixed; doc blocks; macOS pty tests; race run on the Mac Mini.
+- [ ] Not blocking: a pty-driven `Prompt` test in harvey could copy `pty_unix_test.go`.
